@@ -1,0 +1,29 @@
+
+import org.apache.spark.{SparkConf,SparkContext}
+import org.apache.spark.sql
+import org.apache.spark.sql.SQLContext._
+
+object BankCaseClass {
+  case class Bank(date:String, job:String, marital : String, education : String, balance :String, housing: String, loan: String)
+  def main(args: Array[String]): Unit = {
+    val conf = new SparkConf().setAppName("caseclass").setMaster("local[*]")
+    //val conf = new SparkConf().setAppName("caseclass").setMaster("args(0))
+    val sc = new SparkContext(conf)
+    val sqlContext = new org.apache.spark.sql.SQLContext(sc)
+    import sqlContext.implicits._
+    val bankText = sc.textFile("/home/hadoop/Downloads/bank/bank-full.csv")
+  //  val bankText = sc.textFile(args(1)) //specify the path of the data
+    val head = bankText.first()
+
+    // original schema "age";"job";"marital";"education";"default";"balance";"housing";"loan";"contact";"day";"month";"duration";"campaign";"pdays";"previous";"poutcome";"y"
+    val bank = bankText.filter(_!=head).map(s=>s.split(",")).map(
+      s=>Bank(s(0),s(1), s(2), s(3), s(4), s(5), s(6))    )
+    val df = bank.toDF().cache()
+      df.registerTempTable("bank")
+    sqlContext.sql("select * from bank").show()
+    sqlContext.sql("select count(*) from bank").show()
+
+//
+
+  }
+}
